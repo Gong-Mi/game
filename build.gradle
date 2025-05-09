@@ -1,0 +1,14 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:7.4.2" # 使用适合你项目的 Gradle 版本
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0" # 如果使用 Kotlin
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

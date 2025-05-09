@@ -1,0 +1,2 @@
+rootProject.name = "your-vulkan-android-app"
+include ":app"

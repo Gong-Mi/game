@@ -1,0 +1,67 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android' # 如果使用 Kotlin
+}
+
+android {
+    namespace 'com.yourvulkanapp' # 替换为你的包名
+    compileSdk 33 # 替换为你需要的 Compile SDK 版本
+
+    defaultConfig {
+        applicationId "com.yourvulkanapp" # 替换为你的应用 ID
+        minSdk 24 # Vulkan 最小需要 API 24 (Android 7.0)
+        targetSdk 33 # 替换为你需要的目标 SDK 版本
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        externalNativeBuild {
+            cmake {
+                cppFlags '' # C++ 编译参数
+                arguments "-DANDROID_STL=c++_shared", "-DANDROID_TOOLCHAIN=clang" # 使用 clang 和共享 C++ STL
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions { # 如果使用 Kotlin
+        jvmTarget = '1.8'
+    }
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt" # 指向你的原生代码的 CMakeLists.txt
+            version "3.22.1" # 确保这个版本在 NDK 自带的或 CI 安装的版本范围内
+        }
+    }
+    packagingOptions {
+        // 如果需要打包 .spv 着色器或其他原生资源到 assets
+        assets {
+            // 从 src/main/assets 复制到 APK 的 assets 目录
+            // 你需要在 CI 中确保编译好的 .spv 文件被放置到这个目录下
+            // 例如: from("src/main/assets")
+        }
+        jniLibs {
+            // 确保你的原生库被打包进来
+            // 例如: from("src/main/cpp/build/libs") // 如果 CMake 输出到这个目录
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.8.0'
+    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'com.google.android.material:material:1.5.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+}

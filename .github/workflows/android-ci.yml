@@ -1,0 +1,70 @@
+name: Android CI Build
+
+# 控制 workflow 何时运行
+on:
+  push:
+    branches: [ main ] # 当推送到 main 分支时触发
+  pull_request:
+    branches: [ main ] # 当向 main 分支发起 Pull Request 时触发
+
+  # 允许你手动从 Actions 标签页运行此 workflow
+  workflow_dispatch:
+
+jobs:
+  build:
+    # 指定运行此 job 的 Runner 类型
+    runs-on: ubuntu-latest
+
+    steps:
+      # 第一步：检出你的仓库代码，以便 workflow 可以访问它
+      - name: Checkout repository
+        uses: actions/checkout@v4 # 建议使用最新的主版本号
+
+      # 第二步：设置 Java 开发环境 (JDK)
+      # 安卓构建需要特定版本的 JDK，根据你的项目调整
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17' # 例如 Android Gradle Plugin 7.0+ 通常需要 JDK 11 或更高, AGP 8.0+ 可能需要 JDK 17
+          distribution: 'temurin' # OpenJDK 发行版， 'zulu', 'adopt' 也可以
+          cache: 'gradle' # 缓存 Gradle 依赖，加快后续构建
+
+      # (可选，但推荐) 缓存 Gradle Wrapper
+      # - name: Cache Gradle Wrapper
+      #   uses: actions/cache@v3 # v4 正在 preview
+      #   with:
+      #     path: ~/.gradle/wrapper
+      #     key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+
+      # (可选，但推荐) 缓存 Gradle 依赖项
+      # setup-java action v2+ 已经内置了 Gradle 缓存功能，所以上面 `cache: 'gradle'` 可能已足够。
+      # 如果需要更细致的控制，可以单独使用 actions/cache
+      # - name: Cache Gradle Dependencies
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ~/.gradle/caches
+      #     key: ${{ runner.os }}-gradle-caches-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-gradle-caches-
+
+      # 第三步：给予 gradlew 执行权限
+      # 在 Linux/macOS Runner 上，gradlew 文件可能没有执行权限
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      # 第四步：运行 Gradle 构建任务
+      # assembleDebug 会构建一个 Debug 版本的 APK
+      - name: Build with Gradle (Debug APK)
+        run: ./gradlew assembleDebug
+        # 如果你的项目有多个模块，可能需要指定模块:
+        # run: ./gradlew :app:assembleDebug
+
+      # 第五步：上传构建产物 (APK 文件)
+      # 这样你就可以从 Actions 的运行结果中下载它
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk # 上传的 artifact 的名字
+          path: app/build/outputs/apk/debug/app-debug.apk # Debug APK 的路径，请根据你的项目确认
+          # 如果 APK 路径不同，例如在模块 'mobile' 而非 'app' 中，路径可能是 mobile/build/outputs/apk/debug/mobile-debug.apk
+          retention-days: 7 # Artifact 保留天数 (可选，默认90天，私有库可自定义，公有库最短1天)
